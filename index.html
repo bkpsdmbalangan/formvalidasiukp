@@ -3,237 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Validasi UKP</title>
-
-    <link rel="icon" type="image/png" href="favicon.png">
-    
+    <title>Form Validasi UKP - Balangan</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
-        /* Pengaturan Cetak Khusus F4 (Super Kompresi 1 Halaman) */
-        @media print {
-            @page {
-                size: 215.9mm 330.2mm; /* Ukuran presisi kertas F4/Folio */
-                margin: 5mm; /* Margin sangat tipis (0.5cm) agar area cetak maksimal */
-            }
-            body { background-color: white !important; font-size: 10pt !important; line-height: 1.2 !important; }
-            .no-print { display: none !important; }
-            .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
-            .print-bg-red { background-color: #fef2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            input::placeholder { color: transparent !important; }
-            
-            /* Kompresi Jarak Vertikal (Margin & Padding) */
-            .mb-4, .mb-6, .mb-8, .mb-10 { margin-bottom: 6px !important; }
-            .mt-6, .mt-8, .mt-10 { margin-top: 6px !important; }
-            .pb-4 { padding-bottom: 4px !important; border-bottom-width: 1px !important; }
-            
-            /* Penyesuaian Ukuran Header & Judul */
-            h1 { font-size: 14pt !important; margin-bottom: 2px !important; }
-            .text-gray-600 { font-size: 10pt !important; margin-bottom: 4px !important; }
-            h2 { font-size: 11pt !important; padding: 4px !important; margin-bottom: 4px !important; }
-            h3 { font-size: 10pt !important; margin-bottom: 2px !important; border-bottom-width: 1px !important; padding-bottom: 1px !important; }
-            
-            /* Penyesuaian Grid & List agar lebih dempet */
-            .gap-4, .gap-6 { gap: 8px !important; }
-            .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 3px !important; }
-            
-            /* Kompresi Input & Checkbox */
-            input[type="text"], select { padding: 2px 4px !important; font-size: 10pt !important; height: auto !important; border-color: #9ca3af !important; }
-            .h-4 { height: 0.8rem !important; }
-            .w-4 { width: 0.8rem !important; }
-            
-            /* Area Peringatan dan Tanda Tangan */
-            .p-3 { padding: 6px !important; border-left-width: 2px !important; }
-            .text-lg { font-size: 11pt !important; }
-            .mb-14 { margin-bottom: 45px !important; } /* Ruang tanda tangan dicukupkan */
-            
-            /* Hapus paksaan blok utuh agar mengalir secara alami */
-            .print-break-inside-avoid { break-inside: auto !important; }
+        body { background-color: #e5e7eb; font-family: Arial, sans-serif; }
+        
+        .f4-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Kita gunakan ukuran asli millimeter agar sinkron dengan PDF (Ukuran Folio/F4) */
+        .f4-page {
+            width: 215.9mm;
+            min-height: 330.2mm;
+            background: white;
+            padding: 10mm; /* Margin keliling dalam kertas */
+            box-sizing: border-box;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            color: #1f2937;
+        }
+
+        /* Pengaturan ukuran huruf spesifik agar dijamin pas 1 halaman */
+        label, span, input, select { font-size: 10pt !important; }
+        h1 { font-size: 14pt !important; }
+        h2 { font-size: 11pt !important; }
+        h3 { font-size: 10pt !important; }
+        
+        .space-y-custom > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0.2rem !important;
+        }
+
+        /* Hilangkan panah dropdown saat di-PDF-kan */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: transparent;
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 p-4 md:p-8 text-sm md:text-base">
+<body>
 
-    <div class="container mx-auto bg-white p-6 md:p-10 rounded-lg shadow-lg max-w-4xl">
-        
-        <div class="text-center mb-6 border-b-2 border-gray-800 pb-4">
-            <h1 class="text-2xl font-bold uppercase">Formulir Kendali Validasi Usul Kenaikan Pangkat</h1>
-            <p class="text-gray-600">Pengecekan Kesesuaian Data SIASN dan Draf SK Kenaikan Pangkat</p>
-        </div>
-
-        <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block font-semibold mb-1">NIP (18 Digit):</label>
-                <input type="text" id="inputNip" maxlength="18" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 font-mono text-sm" placeholder="Ketik/Paste 18 Digit NIP">
-                <p id="statusPencarian" class="text-xs text-blue-600 mt-1 hidden">Sedang mencari data ASN...</p>
+    <div class="f4-wrapper">
+        <div id="form-content" class="f4-page">
+            
+            <div class="text-center mb-5 border-b-2 border-gray-800 pb-2">
+                <h1 class="font-bold uppercase tracking-wide">Formulir Kendali Validasi Usul Kenaikan Pangkat</h1>
+                <p class="text-[10pt] text-gray-600 italic mt-1">Pengecekan Kesesuaian Data SIASN dan Draf SK Kenaikan Pangkat</p>
             </div>
-            <div>
-                <label class="block font-semibold mb-1">Nama Pegawai yang Diusulkan:</label>
-                <input type="text" id="inputNama" class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 bg-gray-50 text-sm" placeholder="Nama otomatis muncul">
-            </div>
-        </div>
 
-        <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block font-semibold mb-1">Jenis Jabatan:</label>
-                <select class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 bg-white text-sm">
-                    <option value="" disabled selected>Pilih Jenis Jabatan...</option>
-                    <option value="Pelaksana">Pelaksana</option>
-                    <option value="Fungsional">Fungsional</option>
-                    <option value="Struktural">Struktural</option>
-                </select>
-            </div>
-            <div>
-                <label class="block font-semibold mb-1">Keterangan KP:</label>
-                <select class="w-full border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500 bg-white text-sm">
-                    <option value="" disabled selected>Pilih Keterangan KP...</option>
-                    <option value="KP Pertama">KP Pertama</option>
-                    <option value="KP Biasa/Reguler">KP Biasa/Reguler</option>
-                    <option value="KP Penyesuaian Ijazah">KP Penyesuaian Ijazah</option>
-                    <option value="KP Percepatan">KP Percepatan</option>
-                    <option value="KP Tambahan AK Pendidikan">KP Tambahan AK Pendidikan (Khusus JF)</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="bg-red-50 border-l-4 border-red-500 p-3 mb-6 print-break-inside-avoid print-bg-red">
-            <label class="flex items-center space-x-3 cursor-pointer">
-                <input type="checkbox" class="form-checkbox h-5 w-5 text-red-600 rounded">
-                <span class="text-red-800 font-bold text-base">SAYA TELAH MENGKLIK FITUR "REFRESH" PADA SIASN SEBELUM SUBMIT</span>
-            </label>
-        </div>
-
-        <h2 class="text-lg font-bold mb-3 bg-gray-200 p-2 rounded">A. Pengecekan pada SIASN (Sebelum Kirim Usulan)</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 print-break-inside-avoid text-sm">
-            <div>
-                <h3 class="font-semibold text-base mb-2 text-blue-800 border-b pb-1">DATA I</h3>
-                <div class="space-y-2">
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Prosedur KP</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Tempat Lahir</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Pendidikan</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Gelar</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Unit Organisasi Induk</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Unit Organisasi</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Jabatan Lama</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>TMT Jabatan Lama</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Angka Kredit Lama</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Jabatan Baru</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>TMT Jabatan Baru</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Angka Kredit Baru</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Masa Kerja Lama</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Masa Kerja Baru</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Lokasi Kerja</span></label>
+            <div class="grid grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block font-bold mb-1 text-gray-700">NIP (18 Digit):</label>
+                    <input type="text" id="inputNip" maxlength="18" class="w-full border-b border-gray-400 px-1 py-1 focus:outline-none focus:border-blue-600 font-mono" placeholder="Ketik NIP di sini...">
+                    <p id="statusPencarian" class="text-[8pt] text-blue-600 mt-1 hidden font-semibold">Mencari data...</p>
+                </div>
+                <div>
+                    <label class="block font-bold mb-1 text-gray-700">Nama Pegawai:</label>
+                    <input type="text" id="inputNama" class="w-full border-b border-gray-400 px-1 py-1 focus:outline-none bg-transparent font-bold" placeholder="Nama akan muncul otomatis">
                 </div>
             </div>
-            <div>
-                <h3 class="font-semibold text-base mb-2 text-blue-800 border-b pb-1">DATA II</h3>
-                <div class="space-y-2">
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>KPPN</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Nama Atasan</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Jabatan Atasan</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Unit Organisasi Atasan</span></label>
+
+            <div class="grid grid-cols-2 gap-6 mb-5">
+                <div>
+                    <label class="block font-bold mb-1 text-gray-700">Jenis Jabatan:</label>
+                    <select class="w-full border-b border-gray-400 px-1 py-1 focus:outline-none cursor-pointer text-gray-800 font-semibold">
+                        <option value="" disabled selected>Pilih Jenis Jabatan...</option>
+                        <option>Pelaksana</option>
+                        <option>Fungsional</option>
+                        <option>Struktural</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold mb-1 text-gray-700">Keterangan KP:</label>
+                    <select class="w-full border-b border-gray-400 px-1 py-1 focus:outline-none cursor-pointer text-gray-800 font-semibold">
+                        <option value="" disabled selected>Pilih Keterangan KP...</option>
+                        <option>KP Pertama</option>
+                        <option>KP Biasa/Reguler</option>
+                        <option>KP Penyesuaian Ijazah</option>
+                        <option>KP Percepatan</option>
+                        <option>KP Tambahan AK Pendidikan</option>
+                    </select>
                 </div>
             </div>
-            <div>
-                <h3 class="font-semibold text-base mb-2 text-blue-800 border-b pb-1">DATA III (File)</h3>
-                <div class="space-y-2">
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File SK Kenaikan Pangkat</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File SK Jabatan</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File PAK</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File Sertif. Uji Kompetensi</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File SK Perberhentian JF</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File SK Pengangkatan JF</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File Ijazah</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File Transkrip Nilai</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File Izin Belajar</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File Pencantuman Gelar</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File Profil Mahasiswa</span></label>
-                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>File Akreditasi PT</span></label>
+
+            <div class="bg-red-50 border border-red-200 p-2 mb-5 rounded">
+                <label class="flex items-center space-x-3 cursor-pointer">
+                    <input type="checkbox" class="w-5 h-5 text-red-600 rounded border-gray-300">
+                    <span class="text-red-700 font-bold text-[10pt] uppercase">SAYA TELAH MENGKLIK FITUR "REFRESH" PADA SIASN SEBELUM SUBMIT</span>
+                </label>
+            </div>
+
+            <h2 class="font-bold mb-3 bg-gray-200 p-1.5 px-3 border-l-4 border-gray-500 uppercase tracking-wide">A. Pengecekan pada SIASN (Sebelum Kirim)</h2>
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="space-y-custom">
+                    <h3 class="font-bold text-blue-900 border-b border-blue-200 mb-1.5 pb-0.5">DATA I</h3>
+                    <div class="flex flex-col space-y-1">
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Prosedur KP</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Tempat Lahir</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Pendidikan</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Gelar</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Unit Org. Induk</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Unit Organisasi</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Jabatan Lama</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>TMT Jabatan Lama</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>AK Lama</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Jabatan Baru</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>TMT Jabatan Baru</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>AK Baru</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>MK Lama</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>MK Baru</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Lokasi Kerja</span></label>
+                    </div>
+                </div>
+                <div class="space-y-custom">
+                    <h3 class="font-bold text-blue-900 border-b border-blue-200 mb-1.5 pb-0.5">DATA II</h3>
+                    <div class="flex flex-col space-y-1">
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>KPPN</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Nama Atasan</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Jabatan Atasan</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Unit Org. Atasan</span></label>
+                    </div>
+                </div>
+                <div class="space-y-custom">
+                    <h3 class="font-bold text-blue-900 border-b border-blue-200 mb-1.5 pb-0.5">DATA III (FILE)</h3>
+                    <div class="flex flex-col space-y-1">
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File SK KP</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File SK Jabatan</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File PAK</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File Sertif. Ukom</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File SK Berhenti JF</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File SK Angkat JF</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File Ijazah</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File Transkrip</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File Izin Belajar</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File Pencantuman Gelar</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File Profil Mhs</span></label>
+                        <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>File Akreditasi</span></label>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <h2 class="text-lg font-bold mb-3 bg-gray-200 p-2 rounded print-break-inside-avoid">B. Pengecekan pada Draf SK Pangkat Baru</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 print-break-inside-avoid text-sm">
-            <div class="space-y-2">
-                <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Nomor Surat</span></label>
-                <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Gelar</span></label>
-                <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Pendidikan</span></label>
-                <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Jabatan Lama</span></label>
+            <h2 class="font-bold mb-3 bg-gray-200 p-1.5 px-3 border-l-4 border-gray-500 uppercase tracking-wide">B. Pengecekan pada Draf SK Pangkat Baru</h2>
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="flex flex-col space-y-1.5">
+                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Nomor Surat</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Gelar</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Pendidikan</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Jabatan Lama</span></label>
+                </div>
+                <div class="flex flex-col space-y-1.5">
+                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Unit Organisasi</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Jabatan Baru</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Angka Kredit Baru</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" class="w-3.5 h-3.5"> <span>Tanggal Terbit</span></label>
+                </div>
             </div>
-            <div class="space-y-2">
-                <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Unit Organisasi</span></label>
-                <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Jabatan Baru</span></label>
-                <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Angka Kredit Baru</span></label>
-                <label class="flex items-center space-x-2"><input type="checkbox" class="w-4 h-4 rounded"> <span>Tanggal Terbit</span></label>
-            </div>
-        </div>
 
-        <div class="mt-6 flex justify-end print-break-inside-avoid text-sm">
-            <div class="text-center w-64">
-                <input type="text" class="w-full text-center focus:outline-none mb-1 bg-transparent text-gray-800 border-b border-dashed border-gray-300 focus:border-solid focus:border-blue-500" placeholder="Paringin, ..............................">
-                <p class="mb-14">Pemeriksa / Anggota Tim,</p>
-                <input type="text" class="w-full border-b border-gray-400 text-center focus:outline-none font-bold" placeholder="Nama Pemeriksa">
+            <div class="flex justify-end mt-4">
+                <div class="text-center w-72">
+                    <div class="flex items-center justify-center space-x-1 mb-1">
+                        <span class="font-semibold text-gray-800">Balangan,</span>
+                        <input type="date" id="inputTanggal" class="bg-transparent focus:outline-none cursor-pointer border-b border-gray-400 py-0.5 text-gray-800">
+                        <span id="txtTanggal" class="hidden text-gray-800 border-b border-gray-400 py-0.5 font-semibold"></span>
+                    </div>
+                    
+                    <p class="mb-20 font-semibold text-gray-800 mt-2">Pemeriksa / Anggota Tim,</p>
+                    
+                    <select id="selectPemeriksa" class="w-full text-center font-bold focus:outline-none bg-transparent cursor-pointer underline underline-offset-4 decoration-2 text-gray-900 text-[11pt]">
+                        <option value="" disabled selected>(Pilih Nama Pemeriksa)</option>
+                        <option value="REZA FAHDINA">REZA FAHDINA</option>
+                        <option value="PAHRIATI">PAHRIATI</option>
+                        <option value="RINI MARLIAWATI">RINI MARLIAWATI</option>
+                    </select>
+                </div>
             </div>
-        </div>
 
-        <div class="mt-8 text-center no-print">
-            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded shadow-lg transition duration-300">
-                🖨️ Cetak / Simpan sebagai PDF
-            </button>
-            <p class="text-xs text-gray-500 mt-3">Pastikan pengaturan kertas di dialog print adalah F4 / Folio (8.5" x 13").</p>
         </div>
     </div>
 
+    <div class="max-w-4xl mx-auto text-center mb-10">
+        <button onclick="unduhPDF()" id="btnDownload" class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-200 uppercase tracking-wider">
+            📥 Unduh PDF (F4)
+        </button>
+        <p id="teksProses" class="text-blue-600 font-bold mt-2 hidden animate-pulse">Memproses PDF, mohon tunggu...</p>
+    </div>
+
     <script>
+        function formatTanggalIndo(dateStr) {
+            if (!dateStr) return "..............................";
+            const date = new Date(dateStr);
+            const opsi = { day: 'numeric', month: 'long', year: 'numeric' };
+            return date.toLocaleDateString('id-ID', opsi);
+        }
+
+        async function unduhPDF() {
+            // Sembunyikan tombol, tampilkan teks proses
+            document.getElementById('btnDownload').classList.add('hidden');
+            document.getElementById('teksProses').classList.remove('hidden');
+
+            // --- KUNCI UTAMA ANTI-TERPOTONG ---
+            // Secara otomatis gulir ke atas terlebih dahulu sebelum render
+            window.scrollTo(0, 0);
+
+            const element = document.getElementById('form-content');
+            
+            // Hapus sementara bayangan (shadow) agar ujung form terlihat bersih di PDF
+            const originalShadow = element.style.boxShadow;
+            element.style.boxShadow = 'none';
+
+            const nipVal = document.getElementById('inputNip').value || 'Data';
+            const tglVal = document.getElementById('inputTanggal').value;
+            
+            // Tukar input kalender dengan teks format Indonesia
+            const txtTanggal = document.getElementById('txtTanggal');
+            const inputTanggal = document.getElementById('inputTanggal');
+            
+            txtTanggal.innerText = formatTanggalIndo(tglVal);
+            txtTanggal.classList.remove('hidden');
+            inputTanggal.classList.add('hidden');
+
+            // Pengaturan PDF Presisi F4/Folio
+            const opt = {
+                margin:       0, // Margin di-set 0 karena form sudah memiliki padding di CSS
+                filename:     `Ceklis_UKP_${nipVal}.pdf`,
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true 
+                },
+                jsPDF:        { 
+                    unit: 'mm', 
+                    format: [215.9, 330.2], // Ukuran eksak kertas Folio/F4
+                    orientation: 'portrait' 
+                }
+            };
+
+            // Tunggu sedikit agar animasi scroll selesai sebelum render
+            setTimeout(async () => {
+                await html2pdf().set(opt).from(element).save();
+
+                // Kembalikan tampilan ke semula
+                txtTanggal.classList.add('hidden');
+                inputTanggal.classList.remove('hidden');
+                element.style.boxShadow = originalShadow;
+                document.getElementById('btnDownload').classList.remove('hidden');
+                document.getElementById('teksProses').classList.add('hidden');
+            }, 500); // jeda setengah detik
+        }
+
+        // --- Logika Autofill dari Firebase ---
         const inputNip = document.getElementById('inputNip');
         const inputNama = document.getElementById('inputNama');
         const statusPencarian = document.getElementById('statusPencarian');
 
-        inputNip.addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, ''); 
-            const nip = this.value;
-
-            if (nip.length === 18) {
-                cariPegawaiDiFirebase(nip);
+        inputNip.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length === 18) {
+                cariPegawai(this.value);
             } else {
                 inputNama.value = '';
-                inputNama.placeholder = 'Nama otomatis muncul';
                 statusPencarian.classList.add('hidden');
             }
         });
 
-        async function cariPegawaiDiFirebase(nip) {
-            statusPencarian.classList.remove('hidden');
-            statusPencarian.innerText = "Mencari data ASN...";
-            statusPencarian.classList.replace('text-red-500', 'text-blue-600');
-            
-            const nodeDatabase = "pegawai"; 
-            const url = `https://database-asn-balangan-default-rtdb.asia-southeast1.firebasedatabase.app/${nodeDatabase}/${nip}.json`;
+        async function cariPegawai(nip) {
+            statusPencarian.innerText = "🔍 Mencari data...";
+            statusPencarian.classList.remove('hidden', 'text-red-600');
+            statusPencarian.classList.add('text-blue-600');
+
+            const url = `https://database-asn-balangan-default-rtdb.asia-southeast1.firebasedatabase.app/pegawai/${nip}.json`;
 
             try {
                 const response = await fetch(url);
-                
-                if (!response.ok) {
-                    throw new Error(`Akses ditolak atau error server (${response.status})`);
-                }
-
                 const data = await response.json();
-
                 if (data) {
-                    inputNama.value = data.nama || data.NAMA; 
+                    inputNama.value = data.nama || data.NAMA;
                     statusPencarian.classList.add('hidden');
                 } else {
-                    inputNama.value = '';
-                    inputNama.placeholder = 'NIP tidak ditemukan di database';
-                    statusPencarian.innerText = "Data tidak ditemukan!";
-                    statusPencarian.classList.replace('text-blue-600', 'text-red-500');
+                    statusPencarian.innerText = "❌ Tidak ditemukan";
+                    statusPencarian.classList.replace('text-blue-600', 'text-red-600');
                 }
-            } catch (error) {
-                console.error("Gagal menarik data:", error);
-                inputNama.value = '';
-                inputNama.placeholder = 'Gagal mengambil data';
-                statusPencarian.innerText = "Koneksi ke database gagal/ditolak.";
-                statusPencarian.classList.replace('text-blue-600', 'text-red-500');
+            } catch (e) {
+                statusPencarian.innerText = "⚠️ Gangguan koneksi";
+                statusPencarian.classList.replace('text-blue-600', 'text-red-600');
             }
         }
     </script>
