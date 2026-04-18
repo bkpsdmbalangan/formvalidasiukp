@@ -16,18 +16,17 @@
             padding: 20px;
         }
 
-        /* Kita gunakan ukuran asli millimeter agar sinkron dengan PDF (Ukuran Folio/F4) */
         .f4-page {
             width: 215.9mm;
             min-height: 330.2mm;
             background: white;
-            padding: 10mm; /* Margin keliling dalam kertas */
+            padding: 10mm; 
             box-sizing: border-box;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             color: #1f2937;
+            position: relative; /* KUNCI UNTUK FOOTER ABSOLUTE */
         }
 
-        /* Pengaturan ukuran huruf spesifik agar dijamin pas 1 halaman */
         label, span, input, select { font-size: 10pt !important; }
         h1 { font-size: 14pt !important; }
         h2 { font-size: 11pt !important; }
@@ -37,7 +36,6 @@
             margin-top: 0.2rem !important;
         }
 
-        /* Hilangkan panah dropdown saat di-PDF-kan */
         select {
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -183,6 +181,10 @@
                 </div>
             </div>
 
+            <div class="absolute text-[8pt] text-gray-500 italic" style="bottom: 10mm; left: 10mm;">
+                Diunduh dari https://formvalidasiukp.simpelblg.id
+            </div>
+
         </div>
     </div>
 
@@ -202,24 +204,19 @@
         }
 
         async function unduhPDF() {
-            // Sembunyikan tombol, tampilkan teks proses
             document.getElementById('btnDownload').classList.add('hidden');
             document.getElementById('teksProses').classList.remove('hidden');
 
-            // --- KUNCI UTAMA ANTI-TERPOTONG ---
-            // Secara otomatis gulir ke atas terlebih dahulu sebelum render
             window.scrollTo(0, 0);
 
             const element = document.getElementById('form-content');
             
-            // Hapus sementara bayangan (shadow) agar ujung form terlihat bersih di PDF
             const originalShadow = element.style.boxShadow;
             element.style.boxShadow = 'none';
 
             const nipVal = document.getElementById('inputNip').value || 'Data';
             const tglVal = document.getElementById('inputTanggal').value;
             
-            // Tukar input kalender dengan teks format Indonesia
             const txtTanggal = document.getElementById('txtTanggal');
             const inputTanggal = document.getElementById('inputTanggal');
             
@@ -227,9 +224,8 @@
             txtTanggal.classList.remove('hidden');
             inputTanggal.classList.add('hidden');
 
-            // Pengaturan PDF Presisi F4/Folio
             const opt = {
-                margin:       0, // Margin di-set 0 karena form sudah memiliki padding di CSS
+                margin:       0, 
                 filename:     `Ceklis_UKP_${nipVal}.pdf`,
                 image:        { type: 'jpeg', quality: 1 },
                 html2canvas:  { 
@@ -238,25 +234,22 @@
                 },
                 jsPDF:        { 
                     unit: 'mm', 
-                    format: [215.9, 330.2], // Ukuran eksak kertas Folio/F4
+                    format: [215.9, 330.2], 
                     orientation: 'portrait' 
                 }
             };
 
-            // Tunggu sedikit agar animasi scroll selesai sebelum render
             setTimeout(async () => {
                 await html2pdf().set(opt).from(element).save();
 
-                // Kembalikan tampilan ke semula
                 txtTanggal.classList.add('hidden');
                 inputTanggal.classList.remove('hidden');
                 element.style.boxShadow = originalShadow;
                 document.getElementById('btnDownload').classList.remove('hidden');
                 document.getElementById('teksProses').classList.add('hidden');
-            }, 500); // jeda setengah detik
+            }, 500); 
         }
 
-        // --- Logika Autofill dari Firebase ---
         const inputNip = document.getElementById('inputNip');
         const inputNama = document.getElementById('inputNama');
         const statusPencarian = document.getElementById('statusPencarian');
